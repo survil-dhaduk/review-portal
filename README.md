@@ -106,6 +106,7 @@ cp .env.example .env
 # Step 5: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
+![Screenshot](screenshot/thumbnails.png)
 
 **Edit a file directly in GitHub**
 
