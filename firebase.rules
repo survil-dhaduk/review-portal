@@ -1,0 +1,56 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAdmin() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isProjectManager() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'project_manager';
+    }
+
+    function isTeamLead() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'team_lead';
+    }
+
+    function isDeveloper() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'developer';
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Criteria collection
+    match /criteria/{criteriaId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // Ratings collection
+    match /ratings/{ratingId} {
+      allow read: if request.auth != null;
+      allow create: if (
+        (isProjectManager() && resource.data.roleOfGivenTo == 'developer') ||
+        (isTeamLead() && resource.data.roleOfGivenTo == 'developer') ||
+        (isAdmin() && (resource.data.roleOfGivenTo == 'project_manager' || resource.data.roleOfGivenTo == 'team_lead'))
+      );
+      allow update: if (
+        (isProjectManager() && resource.data.roleOfGivenTo == 'developer') ||
+        (isTeamLead() && resource.data.roleOfGivenTo == 'developer') ||
+        (isAdmin() && (resource.data.roleOfGivenTo == 'project_manager' || resource.data.roleOfGivenTo == 'team_lead'))
+      );
+      allow delete: if isAdmin();
+    }
+  }
+}
